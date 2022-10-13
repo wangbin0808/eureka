@@ -27,6 +27,7 @@ public class OverrideExistsRule implements InstanceStatusOverrideRule {
         InstanceInfo.InstanceStatus overridden = statusOverrides.get(instanceInfo.getId());
         // If there are instance specific overrides, then they win - otherwise the ASG status
         if (overridden != null) {
+            // overridden == null 也不能说明是首次注册的
             logger.debug("The instance specific override for instance {} and the value is {}",
                     instanceInfo.getId(), overridden.name());
             return StatusOverrideResult.matchingStatus(overridden);

@@ -40,10 +40,14 @@ public class Lease<T> {
 
     private T holder;
     private long evictionTimestamp;
+    // 注册的时间
     private long registrationTimestamp;
+    // 服务是up状态的时间(服务启动)
     private long serviceUpTimestamp;
     // Make it volatile so that the expiration task would see this quicker
+    // 最后一次更新的时间戳 + duration
     private volatile long lastUpdateTimestamp;
+    // 过期间隔
     private long duration;
 
     public Lease(T r, int durationInSecs) {
@@ -108,6 +112,8 @@ public class Lease<T> {
      * @param additionalLeaseMs any additional lease time to add to the lease evaluation in ms.
      */
     public boolean isExpired(long additionalLeaseMs) {
+        // evictionTimestamp删除时间戳
+        //
         return (evictionTimestamp > 0 || System.currentTimeMillis() > (lastUpdateTimestamp + duration + additionalLeaseMs));
     }
 

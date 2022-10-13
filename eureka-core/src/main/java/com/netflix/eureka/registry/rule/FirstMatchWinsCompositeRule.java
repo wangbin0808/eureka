@@ -9,6 +9,7 @@ import java.util.List;
 /**
  * This rule takes an ordered list of rules and returns the result of the first match or the
  * result of the {@link AlwaysMatchInstanceStatusRule}.
+ * 首先按照顺序来判断是否命中规则，如果命中就返回，如果rules规则中都没有命中，则判断是否命中规则defaultRule(AlwaysMatchInstanceStatusRule)
  *
  * Created by Nikos Michalakis on 7/13/16.
  */

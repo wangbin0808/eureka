@@ -59,6 +59,9 @@ import com.thoughtworks.xstream.annotations.XStreamImplicit;
  *
  * @author Karthik Ranganathan
  *
+ * 该类封装了来自于Eureka Server的所有注册信息。我们可以称其为“客户端注册表”。只所以要强调“客
+ * 户端”是因为，服务端的注册表不是这样表示的，是一个Map。
+ *
  */
 @Serializer("com.netflix.discovery.converters.EntityBodyConverter")
 @XStreamAlias("applications")
@@ -84,6 +87,7 @@ public class Applications {
     private Long versionDelta;
     @XStreamImplicit
     private final AbstractQueue<Application> applications;
+    // key为微服务名称，value为Application
     private final Map<String, Application> appNameApplicationMap;
     private final Map<String, VipIndexSupport> virtualHostNameAppMap;
     private final Map<String, VipIndexSupport> secureVirtualHostNameAppMap;

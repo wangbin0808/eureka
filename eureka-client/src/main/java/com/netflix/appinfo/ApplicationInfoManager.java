@@ -246,10 +246,12 @@ public class ApplicationInfoManager {
     }
 
     public void refreshLeaseInfoIfRequired() {
+        // 本地缓存的信息
         LeaseInfo leaseInfo = instanceInfo.getLeaseInfo();
         if (leaseInfo == null) {
             return;
         }
+        // 从配置文件获取
         int currentLeaseDuration = config.getLeaseExpirationDurationInSeconds();
         int currentLeaseRenewal = config.getLeaseRenewalIntervalInSeconds();
         if (leaseInfo.getDurationInSecs() != currentLeaseDuration || leaseInfo.getRenewalIntervalInSecs() != currentLeaseRenewal) {

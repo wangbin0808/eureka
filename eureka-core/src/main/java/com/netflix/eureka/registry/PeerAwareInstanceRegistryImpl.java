@@ -337,12 +337,15 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
     @Override
     public boolean shouldAllowAccess(boolean remoteRegionRequired) {
         if (this.peerInstancesTransferEmptyOnStartup) {
+            // 若当前时间 不大于 启动时间与等待同步时间的和，则当前server禁止访问，即返回false
             if (!(System.currentTimeMillis() > this.startupTime + serverConfig.getWaitTimeInMsWhenSyncEmpty())) {
                 return false;
             }
         }
+        // 若要访问远程region，则遍历所有远程region，只要又一个没有准备就绪，则禁止访问
         if (remoteRegionRequired) {
             for (RemoteRegionRegistry remoteRegionRegistry : this.regionNameVSRemoteRegistry.values()) {
+                // 只要一个没有准备好
                 if (!remoteRegionRegistry.isReadyForServingData()) {
                     return false;
                 }
@@ -477,12 +480,19 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
         }
     }
 
+    // 返回true：表示client会过期
+    // 返回false：表示client不会过期
     @Override
     public boolean isLeaseExpirationEnabled() {
+        // 只要自我保护机制关闭了，client就会过期
         if (!isSelfPreservationModeEnabled()) {
             // The self preservation mode is disabled, hence allowing the instances to expire.
             return true;
         }
+        // 代码走到这里，说明自我保护机制是开启的。那么此时的client是否过期，就取决于逻辑
+        // numberOfRenewsPerMinThreshold 是开启client过期模式的阈值，是平均每分钟收到的续约数量
+        // 若最后一分钟收到的续约数量 大于 这个阈值，说明现在的client数量很多，不用考虑 可用性 问题，
+        // 只要出现过期的client，直接干掉。若小于这个阈值，则开启保护，为了保证可用性，出现过期client，也不将其从注册表中干掉
         return numberOfRenewsPerMinThreshold > 0 && getNumOfRenewsInLastMin() > numberOfRenewsPerMinThreshold;
     }
 

@@ -93,11 +93,14 @@ class InstanceInfoReplicator implements Runnable {
                         logger.debug("Executing on-demand update of local InstanceInfo");
     
                         Future latestPeriodic = scheduledPeriodicRef.get();
+                        // 正在执行
                         if (latestPeriodic != null && !latestPeriodic.isDone()) {
                             logger.debug("Canceling the latest scheduled update, it will be rescheduled at the end of on demand update");
+                            // 取消定时任务
                             latestPeriodic.cancel(false);
                         }
-    
+
+                        // 开启新的任务
                         InstanceInfoReplicator.this.run();
                     }
                 });
@@ -118,6 +121,7 @@ class InstanceInfoReplicator implements Runnable {
 
             Long dirtyTimestamp = instanceInfo.isDirtyWithTime();
             if (dirtyTimestamp != null) {
+                // 提交注册
                 discoveryClient.register();
                 instanceInfo.unsetIsDirty(dirtyTimestamp);
             }
@@ -125,6 +129,7 @@ class InstanceInfoReplicator implements Runnable {
             logger.warn("There was a problem with the instance info replicator", t);
         } finally {
             Future next = scheduler.schedule(this, replicationIntervalSeconds, TimeUnit.SECONDS);
+            // 放的是定时任务
             scheduledPeriodicRef.set(next);
         }
     }

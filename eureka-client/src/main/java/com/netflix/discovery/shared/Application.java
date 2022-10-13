@@ -49,6 +49,9 @@ import com.thoughtworks.xstream.annotations.XStreamOmitField;
  *
  * @author Karthik Ranganathan
  *
+ * 保存了一个特定的instance列表
+ * 一个Application实例中保存着一个特定微服务的所有提供者实例
+ *
  */
 @Serializer("com.netflix.discovery.converters.EntityBodyConverter")
 @XStreamAlias("application")
@@ -69,11 +72,13 @@ public class Application {
     @XStreamOmitField
     private volatile boolean isDirty = false;
 
+    // 保存着当前name所指定的微服务名称的所有InstanceInfo
     @XStreamImplicit
     private final Set<InstanceInfo> instances;
 
     private final AtomicReference<List<InstanceInfo>> shuffledInstances;
 
+    // key为instanceId，value为instanceInfo
     private final Map<String, InstanceInfo> instancesMap;
 
     public Application() {

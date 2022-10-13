@@ -113,6 +113,7 @@ public class ApplicationsResource {
      * @return a response containing information about all {@link com.netflix.discovery.shared.Applications}
      *         from the {@link AbstractInstanceRegistry}.
      */
+    // 全量获取
     @GET
     public Response getContainers(@PathParam("version") String version,
                                   @HeaderParam(HEADER_ACCEPT) String acceptHeader,
@@ -121,6 +122,7 @@ public class ApplicationsResource {
                                   @Context UriInfo uriInfo,
                                   @Nullable @QueryParam("regions") String regionsStr) {
 
+        // 是否访问远程region
         boolean isRemoteRegionRequested = null != regionsStr && !regionsStr.isEmpty();
         String[] regions = null;
         if (!isRemoteRegionRequested) {
@@ -146,13 +148,14 @@ public class ApplicationsResource {
         }
 
         Key cacheKey = new Key(Key.EntityType.Application,
-                ResponseCacheImpl.ALL_APPS,
+                ResponseCacheImpl.ALL_APPS, // 注意这个常量，其表示这是 全量下载
                 keyType, CurrentRequestVersion.get(), EurekaAccept.fromString(eurekaAccept), regions
         );
 
         Response response;
+        // 是否需要压缩
         if (acceptEncoding != null && acceptEncoding.contains(HEADER_GZIP_VALUE)) {
-            response = Response.ok(responseCache.getGZIP(cacheKey))
+            response = Response.ok(responseCache.getGZIP(cacheKey))// 获取到一个压缩过的结果
                     .header(HEADER_CONTENT_ENCODING, HEADER_GZIP_VALUE)
                     .header(HEADER_CONTENT_TYPE, returnMediaType)
                     .build();
@@ -190,8 +193,10 @@ public class ApplicationsResource {
      * @param eurekaAccept an eureka accept extension, see {@link com.netflix.appinfo.EurekaAccept}
      * @param uriInfo  the {@link java.net.URI} information of the request made.
      * @return response containing the delta information of the
-     *         {@link AbstractInstanceRegistry}.
+     *         {@link AbstractInstanceRegistry}
+     *
      */
+    // 增量获取
     @Path("delta")
     @GET
     public Response getContainerDifferential(
@@ -205,6 +210,7 @@ public class ApplicationsResource {
 
         // If the delta flag is disabled in discovery or if the lease expiration
         // has been disabled, redirect clients to get all instances
+        // 若禁止增量下载，或禁止访问，则直接结束，返回FORBIDDEN
         if ((serverConfig.shouldDisableDelta()) || (!registry.shouldAllowAccess(isRemoteRegionRequested))) {
             return Response.status(Status.FORBIDDEN).build();
         }
@@ -227,7 +233,7 @@ public class ApplicationsResource {
         }
 
         Key cacheKey = new Key(Key.EntityType.Application,
-                ResponseCacheImpl.ALL_APPS_DELTA,
+                ResponseCacheImpl.ALL_APPS_DELTA,// 表明这里要增量下载的
                 keyType, CurrentRequestVersion.get(), EurekaAccept.fromString(eurekaAccept), regions
         );
 

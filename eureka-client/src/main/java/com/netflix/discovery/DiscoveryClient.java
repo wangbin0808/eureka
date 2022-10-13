@@ -436,17 +436,21 @@ public class DiscoveryClient implements EurekaClient {
             throw new RuntimeException("Failed to initialize DiscoveryClient!", e);
         }
 
+        // 获取注册表
         if (clientConfig.shouldFetchRegistry()) {
             try {
+                // 获取注册信息
                 boolean primaryFetchRegistryResult = fetchRegistry(false);
                 if (!primaryFetchRegistryResult) {
                     logger.info("Initial registry fetch from primary servers failed");
                 }
                 boolean backupFetchRegistryResult = true;
+                // 从备份里面获取注册表
                 if (!primaryFetchRegistryResult && !fetchRegistryFromBackup()) {
                     backupFetchRegistryResult = false;
                     logger.info("Initial registry fetch from backup servers failed");
                 }
+                // 是否在启动的是否获取注册表
                 if (!primaryFetchRegistryResult && !backupFetchRegistryResult && clientConfig.shouldEnforceFetchRegistryAtInit()) {
                     throw new IllegalStateException("Fetch registry error at startup. Initial fetch failed.");
                 }
@@ -463,6 +467,7 @@ public class DiscoveryClient implements EurekaClient {
 
         if (clientConfig.shouldRegisterWithEureka() && clientConfig.shouldEnforceRegistrationAtInit()) {
             try {
+                // 2、注册
                 if (!register() ) {
                     throw new IllegalStateException("Registration error at startup. Invalid server response.");
                 }
@@ -896,6 +901,7 @@ public class DiscoveryClient implements EurekaClient {
                 REREGISTER_COUNTER.increment();
                 logger.info(PREFIX + "{} - Re-registering apps/{}", appPathIdentifier, instanceInfo.getAppName());
                 long timestamp = instanceInfo.setIsDirtyWithTime();
+                // 第一次真正注册是在这个地方
                 boolean success = register();
                 if (success) {
                     instanceInfo.unsetIsDirty(timestamp);
@@ -979,6 +985,7 @@ public class DiscoveryClient implements EurekaClient {
 
     /**
      * Fetches the registry information.
+     * 获取注册信息
      *
      * <p>
      * This method tries to get only deltas after the first fetch unless there
@@ -1011,8 +1018,10 @@ public class DiscoveryClient implements EurekaClient {
                 logger.info("Registered Applications size is zero : {}",
                         (applications.getRegisteredApplications().size() == 0));
                 logger.info("Application version is -1: {}", (applications.getVersion() == -1));
+                // 全量获取注册表
                 getAndStoreFullRegistry();
             } else {
+                // 增量获取注册表
                 getAndUpdateDelta(applications);
             }
             applications.setAppsHashCode(applications.getReconcileHashCode());
@@ -1146,6 +1155,9 @@ public class DiscoveryClient implements EurekaClient {
             String reconcileHashCode = "";
             if (fetchRegistryUpdateLock.tryLock()) {
                 try {
+                    // 这里要将从Server获取到的所有变更信息更新到本地缓存。这些变更信息来自于两类Region：本地Region与远程Region。
+                    // 而本地缓存也也 分为两类：缓存本地Region的applications与缓存所有远程Region 的注
+                    // 册信息的map(key为远程Region，value为该远程Region的注册 表)
                     updateDelta(delta);
                     reconcileHashCode = getReconcileHashCode(applications);
                 } finally {
@@ -1295,6 +1307,7 @@ public class DiscoveryClient implements EurekaClient {
 
     /**
      * Initializes all scheduled tasks.
+     * 开启定时任务
      */
     private void initScheduledTasks() {
         if (clientConfig.shouldFetchRegistry()) {
@@ -1321,6 +1334,7 @@ public class DiscoveryClient implements EurekaClient {
             logger.info("Starting heartbeat executor: " + "renew interval is: {}", renewalIntervalInSecs);
 
             // Heartbeat timer
+            // 心跳检测
             heartbeatTask = new TimedSupervisorTask(
                     "heartbeat",
                     scheduler,

@@ -118,6 +118,7 @@ public class InstanceResource {
         }
         // Check if we need to sync based on dirty time stamp, the client
         // instance might have changed some value
+        // 同步本地的 修改overriddenStatus
         Response response;
         if (lastDirtyTimestamp != null && serverConfig.shouldSyncWhenTimestampDiffers()) {
             response = this.validateDirtyTimestamp(Long.valueOf(lastDirtyTimestamp), isFromReplicaNode);
@@ -196,6 +197,7 @@ public class InstanceResource {
      * @return response indicating whether the operation was a success or
      *         failure.
      */
+    // 可以-处理客户端删除overridden状态请求
     @DELETE
     @Path("status")
     public Response deleteStatusUpdate(
@@ -273,11 +275,13 @@ public class InstanceResource {
      *            replicated from other nodes.
      * @return response indicating whether the operation was a success or
      *         failure.
+     *         服务下架
      */
     @DELETE
     public Response cancelLease(
             @HeaderParam(PeerEurekaNode.HEADER_REPLICATION) String isReplication) {
         try {
+            // 处理
             boolean isSuccess = registry.cancel(app.getName(), id,
                 "true".equals(isReplication));
 
@@ -302,6 +306,7 @@ public class InstanceResource {
             if ((lastDirtyTimestamp != null) && (!lastDirtyTimestamp.equals(appInfo.getLastDirtyTimestamp()))) {
                 Object[] args = {id, appInfo.getLastDirtyTimestamp(), lastDirtyTimestamp, isReplication};
 
+                // 比较本地的lastDirtyTimestamp和传过来的lastDirtyTimestamp 当传过来的大于本地的，说明是新的
                 if (lastDirtyTimestamp > appInfo.getLastDirtyTimestamp()) {
                     logger.debug(
                             "Time to sync, since the last dirty timestamp differs -"
@@ -309,6 +314,7 @@ public class InstanceResource {
                             args);
                     return Response.status(Status.NOT_FOUND).build();
                 } else if (appInfo.getLastDirtyTimestamp() > lastDirtyTimestamp) {
+                    // 网络抖动 第一次请求 比第二次请求到的迟，才会出现这个情况
                     // In the case of replication, send the current instance info in the registry for the
                     // replicating node to sync itself with this one.
                     if (isReplication) {
