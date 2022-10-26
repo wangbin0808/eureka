@@ -34,6 +34,10 @@ public class ConfigClusterResolver implements ClusterResolver<AwsEndpoint> {
 
     @Override
     public List<AwsEndpoint> getClusterEndpoints() {
+        /**
+         * 是否从dns拉去url 默认false
+         * use-dns-for-fetching-service-urls: true
+         */
         if (clientConfig.shouldUseDnsForFetchingServiceUrls()) {
             if (logger.isInfoEnabled()) {
                 logger.info("Resolving eureka endpoints via DNS: {}", getDNSName());
@@ -41,6 +45,7 @@ public class ConfigClusterResolver implements ClusterResolver<AwsEndpoint> {
             return getClusterEndpointsFromDns();
         } else {
             logger.info("Resolving eureka endpoints via configuration");
+            // 我们不配置use-dns-for-fetching-service-urls 这个就走这个地方
             return getClusterEndpointsFromConfig();
         }
     }
@@ -69,6 +74,7 @@ public class ConfigClusterResolver implements ClusterResolver<AwsEndpoint> {
     }
 
     private List<AwsEndpoint> getClusterEndpointsFromConfig() {
+        // 获取region
         String[] availZones = clientConfig.getAvailabilityZones(clientConfig.getRegion());
         String myZone = InstanceInfo.getZone(availZones, myInstanceInfo);
 

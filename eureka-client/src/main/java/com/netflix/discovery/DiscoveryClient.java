@@ -420,6 +420,7 @@ public class DiscoveryClient implements EurekaClient {
             );  // use direct handoff
 
             eurekaTransport = new EurekaTransport();
+            // 执行server--的任务
             scheduleServerEndpointTask(eurekaTransport, args);
 
             AzToRegionMapper azToRegionMapper;
@@ -548,6 +549,7 @@ public class DiscoveryClient implements EurekaClient {
             }
         };
 
+        // 初始化--- 这个往下跟可以得到配置的server
         eurekaTransport.bootstrapResolver = EurekaHttpClients.newBootstrapResolver(
                 clientConfig,
                 transportConfig,
@@ -557,6 +559,7 @@ public class DiscoveryClient implements EurekaClient {
                 endpointRandomizer
         );
 
+        // 注册
         if (clientConfig.shouldRegisterWithEureka()) {
             EurekaHttpClientFactory newRegistrationClientFactory = null;
             EurekaHttpClient newRegistrationClient = null;

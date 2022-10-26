@@ -98,11 +98,13 @@ public class RetryableEurekaHttpClient extends EurekaHttpClientDecorator {
     protected <R> EurekaHttpResponse<R> execute(RequestExecutor<R> requestExecutor) {
         List<EurekaEndpoint> candidateHosts = null;
         int endpointIdx = 0;
+        // 默认重试3次
         for (int retry = 0; retry < numberOfRetries; retry++) {
             EurekaHttpClient currentHttpClient = delegate.get();
             EurekaEndpoint currentEndpoint = null;
             if (currentHttpClient == null) {
                 if (candidateHosts == null) {
+                    // 获取eureka的服务器 serverUrl eureka.client.service-url
                     candidateHosts = getHostCandidates();
                     if (candidateHosts.isEmpty()) {
                         throw new TransportException("There is no known eureka server; cluster server list is empty");
@@ -111,12 +113,13 @@ public class RetryableEurekaHttpClient extends EurekaHttpClientDecorator {
                 if (endpointIdx >= candidateHosts.size()) {
                     throw new TransportException("Cannot execute request on any known server");
                 }
-
+                // 从里面选择一个
                 currentEndpoint = candidateHosts.get(endpointIdx++);
                 currentHttpClient = clientFactory.newClient(currentEndpoint);
             }
 
             try {
+                // 执行代码
                 EurekaHttpResponse<R> response = requestExecutor.execute(currentHttpClient);
                 if (serverStatusEvaluator.accept(response.getStatusCode(), requestExecutor.getRequestType())) {
                     delegate.set(currentHttpClient);
@@ -159,6 +162,7 @@ public class RetryableEurekaHttpClient extends EurekaHttpClientDecorator {
     }
 
     private List<EurekaEndpoint> getHostCandidates() {
+        // 获取server集群的节点
         List<EurekaEndpoint> candidateHosts = clusterResolver.getClusterEndpoints();
         quarantineSet.retainAll(candidateHosts);
 

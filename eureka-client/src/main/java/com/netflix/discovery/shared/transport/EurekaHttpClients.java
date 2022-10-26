@@ -127,6 +127,7 @@ public final class EurekaHttpClients {
         }
 
         // if all else fails, return the default
+        // 处理server服务器
         return defaultBootstrapResolver(clientConfig, myInstanceInfo, randomizer);
     }
 
@@ -154,6 +155,7 @@ public final class EurekaHttpClients {
             failFastOnInitCheck(clientConfig, msg);
         }
 
+        // 开启一个定时任务
         return new AsyncResolver<>(
                 EurekaClientNames.BOOTSTRAP,
                 delegateResolver,
